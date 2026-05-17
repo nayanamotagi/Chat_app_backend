@@ -25,7 +25,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: process.env.CLIENT_URL || "chat-app-frontend-2rte-lpp3sbuj2-nayanamotagis-projects.vercel.app",
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -34,7 +34,7 @@ const io = new Server(server, {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: process.env.CLIENT_URL || "chat-app-frontend-2rte-lpp3sbuj2-nayanamotagis-projects.vercel.app",
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
