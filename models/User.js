@@ -97,10 +97,10 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Only index phoneNumber since email and username already have unique: true (which creates indexes)
-userSchema.index({ phoneNumber: 1 });
 
-userSchema.methods.comparePassword = async function(candidatePassword) {
+
+
+userSchema.methods.comparePassword = async function (candidatePassword) {
   if (!this.password) {
     console.error('comparePassword: No password field on user');
     return false;
@@ -117,7 +117,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   }
 };
 
-userSchema.methods.setPassword = async function(password) {
+userSchema.methods.setPassword = async function (password) {
   this.password = await bcrypt.hash(password, 12);
   return this;
 };
