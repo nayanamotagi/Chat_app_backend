@@ -21,54 +21,55 @@ router.post('/register',
     body('username').optional().trim().isLength({ min: 3, max: 30 }).matches(/^[a-zA-Z0-9_]+$/)
       .withMessage('Username must be 3-30 characters, alphanumeric and underscores only'),
     body('phoneNumber').trim().notEmpty().withMessage('Phone number is required')
-      .matches(/^\+?[1-9]\d{1,14}$/)
-      .withMessage('Phone number must be in E.164 format (e.g., +1234567890)')
+      .matches(/^\d{10}$/)
+      .withMessage('Phone number must be exactly 10 digits and should not include a + sign')
   ],
   async (req, res, next) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         const errorMessages = errors.array().map(err => err.msg).join(', ');
-        return res.status(400).json({ 
-          success: false, 
+        return res.status(400).json({
+          success: false,
           error: errorMessages,
-          errors: errors.array() 
+          errors: errors.array()
         });
       }
 
       const { email, password, displayName, username, phoneNumber } = req.body;
+      const phoneNumberTrimmed = phoneNumber?.trim();
 
       // Normalize email for consistent storage
       const normalizedEmail = normalizeEmail(email);
 
       // Check if user already exists
-      const existingUser = await User.findOne({ 
+      const existingUser = await User.findOne({
         $or: [
           { email: normalizedEmail },
           { email: email.toLowerCase() },
           ...(username && username.trim() ? [{ username: username.toLowerCase().trim() }] : []),
-          ...(phoneNumber && phoneNumber.trim() ? [{ phoneNumber: phoneNumber.trim() }] : [])
+          ...(phoneNumberTrimmed ? [{ phoneNumber: phoneNumberTrimmed }] : [])
         ]
       });
 
       if (existingUser) {
         const existingEmailNormalized = normalizeEmail(existingUser.email);
         if (existingEmailNormalized === normalizedEmail || existingUser.email === email.toLowerCase()) {
-          return res.status(400).json({ 
-            success: false, 
-            error: 'Email already registered' 
+          return res.status(400).json({
+            success: false,
+            error: 'Email already registered'
           });
         }
         if (username && username.trim() && existingUser.username === username.toLowerCase().trim()) {
-          return res.status(400).json({ 
-            success: false, 
-            error: 'Username already taken' 
+          return res.status(400).json({
+            success: false,
+            error: 'Username already taken'
           });
         }
         if (existingUser.phoneNumber === phoneNumberTrimmed) {
-          return res.status(400).json({ 
-            success: false, 
-            error: 'Phone number already registered' 
+          return res.status(400).json({
+            success: false,
+            error: 'Phone number already registered'
           });
         }
       }
@@ -91,7 +92,7 @@ router.post('/register',
       await user.save();
 
       const { accessToken, refreshToken } = generateTokens(user._id.toString());
-      
+
       const deviceInfo = {
         userAgent: req.headers['user-agent'],
         ip: req.ip,
@@ -126,7 +127,7 @@ router.post('/register',
           error: `${field === 'email' ? 'Email' : field === 'username' ? 'Username' : 'Field'} already exists`
         });
       }
-      
+
       // Handle validation errors
       if (error.name === 'ValidationError') {
         const messages = Object.values(error.errors || {}).map(e => e.message).join(', ');
@@ -135,7 +136,7 @@ router.post('/register',
           error: messages || 'Validation error'
         });
       }
-      
+
       // Log error for debugging
       console.error('Registration error:', {
         message: error.message,
@@ -143,7 +144,7 @@ router.post('/register',
         code: error.code,
         name: error.name
       });
-      
+
       next(error);
     }
   }
@@ -177,7 +178,7 @@ router.post('/login',
       const emailLower = email.toLowerCase().trim();
 
       // Find user by normalized email, original email, or username
-      const user = await User.findOne({ 
+      const user = await User.findOne({
         $or: [
           { email: normalizedEmail },
           { email: emailLower },
@@ -186,7 +187,7 @@ router.post('/login',
       }).select('+password');
 
       if (!user) {
-        console.error('Login failed: User not found', { 
+        console.error('Login failed: User not found', {
           searchedEmail: emailLower,
           searchedAs: 'email or username'
         });
@@ -198,7 +199,7 @@ router.post('/login',
 
       // Check if password field was actually loaded
       if (!user.password) {
-        console.error('Login failed: Password field not loaded or not set', { 
+        console.error('Login failed: Password field not loaded or not set', {
           userId: user._id,
           email: user.email,
           hasPasswordField: 'password' in user
@@ -212,8 +213,8 @@ router.post('/login',
       // Verify password
       const isPasswordValid = await user.comparePassword(password);
       if (!isPasswordValid) {
-        console.error('Login failed: Password mismatch', { 
-          userId: user._id, 
+        console.error('Login failed: Password mismatch', {
+          userId: user._id,
           email: user.email,
           passwordHashPrefix: user.password?.substring(0, 10)
         });
@@ -230,7 +231,7 @@ router.post('/login',
       await user.save();
 
       const { accessToken, refreshToken } = generateTokens(user._id.toString());
-      
+
       const deviceInfo = {
         userAgent: req.headers['user-agent'],
         ip: req.ip,
@@ -328,7 +329,7 @@ router.get('/me', authenticate, async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id)
       .select('-password -encryptionKey -publicKey');
-    
+
     res.json({ success: true, user });
   } catch (error) {
     next(error);
