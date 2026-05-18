@@ -34,12 +34,12 @@ const io = new Server(server, {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: [
-    'https://chat-app-frontend-2rte.vercel.app',
-    'https://nayanamotagi-chatappfrontend-quiuya7kb-nayanamotagis-projects.vercel.app'
-  ],
-  credentials: true
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.options('*', cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(rateLimiter);
