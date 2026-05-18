@@ -4,7 +4,7 @@ import User from '../models/User.js';
 import { generateTokens, createSession, refreshAccessToken, invalidateSession } from '../utils/jwt.js';
 import { generateEncryptionKey, generateKeyPair } from '../utils/encryption.js';
 import { authenticate } from '../middleware/auth.js';
-import { authLimiter } from '../middleware/rateLimiter.js';
+import rateLimiter from '../middleware/rateLimiter.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { normalizeEmail } from '../utils/emailNormalizer.js';
 
@@ -12,7 +12,7 @@ const router = express.Router();
 
 // Register new user
 router.post('/register',
-  authLimiter,
+  rateLimiter,
   [
     body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
@@ -152,7 +152,7 @@ router.post('/register',
 
 // Login
 router.post('/login',
-  authLimiter,
+  rateLimiter,
   [
     body('email').notEmpty().withMessage('Email or username is required'),
     body('password').notEmpty().withMessage('Password is required')
