@@ -91,7 +91,13 @@ router.post('/register',
       await user.setPassword(password);
       await user.save();
 
-      const { accessToken, refreshToken } = generateTokens(user._id.toString());
+      let accessToken, refreshToken;
+      try {
+        ({ accessToken, refreshToken } = generateTokens(user._id.toString()));
+      } catch (err) {
+        console.error('Token generation error during registration:', err.message || err);
+        return res.status(500).json({ success: false, error: 'Server configuration error (tokens)' });
+      }
 
       const deviceInfo = {
         userAgent: req.headers['user-agent'],
@@ -99,7 +105,12 @@ router.post('/register',
         deviceType: req.headers['user-agent']?.includes('Mobile') ? 'mobile' : 'desktop'
       };
 
-      await createSession(user._id.toString(), accessToken, refreshToken, deviceInfo);
+      try {
+        await createSession(user._id.toString(), accessToken, refreshToken, deviceInfo);
+      } catch (err) {
+        console.error('Session creation error during registration:', err.message || err);
+        return res.status(500).json({ success: false, error: 'Server configuration error (session)' });
+      }
 
       res.status(201).json({
         success: true,
@@ -230,7 +241,13 @@ router.post('/login',
       user.lastSeen = new Date();
       await user.save();
 
-      const { accessToken, refreshToken } = generateTokens(user._id.toString());
+      let accessToken, refreshToken;
+      try {
+        ({ accessToken, refreshToken } = generateTokens(user._id.toString()));
+      } catch (err) {
+        console.error('Token generation error during login:', err.message || err);
+        return res.status(500).json({ success: false, error: 'Server configuration error (tokens)' });
+      }
 
       const deviceInfo = {
         userAgent: req.headers['user-agent'],
@@ -238,7 +255,12 @@ router.post('/login',
         deviceType: req.headers['user-agent']?.includes('Mobile') ? 'mobile' : 'desktop'
       };
 
-      await createSession(user._id, accessToken, refreshToken, deviceInfo);
+      try {
+        await createSession(user._id, accessToken, refreshToken, deviceInfo);
+      } catch (err) {
+        console.error('Session creation error during login:', err.message || err);
+        return res.status(500).json({ success: false, error: 'Server configuration error (session)' });
+      }
 
       res.json({
         success: true,
