@@ -198,14 +198,7 @@ router.post('/login',
       }).select('+password');
 
       if (!user) {
-        console.error('Login failed: User not found', {
-          searchedEmail: emailLower,
-          searchedAs: 'email or username'
-        });
-        return res.status(401).json({
-          success: false,
-          error: 'Invalid email or password'
-        });
+        return res.status(400).json({ success: false, error: 'User not found' });
       }
 
       // Check if password field was actually loaded
