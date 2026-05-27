@@ -21,6 +21,15 @@ import { setSocketIO } from './utils/socketHelper.js';
 
 dotenv.config();
 
+if (!process.env.JWT_SECRET) {
+  console.error('❌ Missing required environment variable: JWT_SECRET');
+  process.exit(1);
+}
+
+if (!process.env.JWT_REFRESH_SECRET) {
+  console.warn('⚠️ JWT_REFRESH_SECRET is not set. Falling back to JWT_SECRET for refresh tokens.');
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {

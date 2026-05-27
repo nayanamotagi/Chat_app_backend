@@ -1,23 +1,31 @@
 import jwt from 'jsonwebtoken';
 import Session from '../models/Session.js';
 
+const getJwtSecrets = () => {
+  const accessSecret = process.env.JWT_SECRET;
+  const refreshSecret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+
+  if (!accessSecret) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+
+  return { accessSecret, refreshSecret };
+};
+
 export const generateTokens = (userId) => {
   // Ensure userId is a string
   const userIdStr = userId?.toString() || userId;
-  
-  if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
-    throw new Error('JWT secrets not configured');
-  }
-  
+  const { accessSecret, refreshSecret } = getJwtSecrets();
+
   const accessToken = jwt.sign(
     { userId: userIdStr },
-    process.env.JWT_SECRET,
+    accessSecret,
     { expiresIn: process.env.JWT_EXPIRE || '15m' }
   );
 
   const refreshToken = jwt.sign(
     { userId: userIdStr, type: 'refresh' },
-    process.env.JWT_REFRESH_SECRET,
+    refreshSecret,
     { expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d' }
   );
 
@@ -41,8 +49,9 @@ export const createSession = async (userId, accessToken, refreshToken, deviceInf
 
 export const refreshAccessToken = async (refreshToken) => {
   try {
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    
+    const { refreshSecret } = getJwtSecrets();
+    const decoded = jwt.verify(refreshToken, refreshSecret);
+
     if (decoded.type !== 'refresh') {
       throw new Error('Invalid token type');
     }
