@@ -81,9 +81,36 @@ app.use(errorHandler);
 // Database connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://nayanamotagi24_db_user:5kZQCbjsHjvIKkiA@cluster0.pdvvlu6.mongodb.net/chat_app?retryWrites=true&w=majority&appName=Cluster0';
 
-mongoose.connect(MONGODB_URI)
+function maskUri(uri) {
+  try {
+    const start = uri.indexOf('://');
+    if (start === -1) return uri;
+    const after = uri.slice(start + 3);
+    const at = after.indexOf('@');
+    if (at === -1) return uri;
+    const creds = after.slice(0, at);
+    const colon = creds.indexOf(':');
+    if (colon === -1) return uri;
+    const user = creds.slice(0, colon + 1);
+    return uri.replace(user + creds.slice(colon + 1) + '@', user + '****@');
+  } catch (e) {
+    return uri;
+  }
+}
+
+const mongooseOptions = {
+  serverSelectionTimeoutMS: 10000
+};
+
+console.log('🔗 Attempting MongoDB connection to:', maskUri(MONGODB_URI));
+
+mongoose.connect(MONGODB_URI, mongooseOptions)
   .then(() => console.log('✅ MongoDB connected to chat_app database'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+  .catch(err => {
+    console.error('❌ MongoDB connection error:');
+    console.error(err && err.stack ? err.stack : err);
+    process.exit(1);
+  });
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

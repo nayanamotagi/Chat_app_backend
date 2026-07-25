@@ -40,7 +40,8 @@ const statusSchema = new mongoose.Schema({
 });
 
 statusSchema.index({ userId: 1, expiresAt: -1 });
-statusSchema.index({ expiresAt: 1 });
+// TTL index is declared on the `expiresAt` field above using `index: { expireAfterSeconds: 0 }`;
+// avoid declaring the same index twice which causes Mongoose warnings.
 
 export default mongoose.model('Status', statusSchema);
 
